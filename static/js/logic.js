@@ -73,6 +73,14 @@ function makeMarkers(data){
 
 
 
+//  make sure you're follwing these instructions, I may have switch depth and magnitutde on some of the asks:
+
+// "Your data markers should reflect the magnitude of the
+// earthquake by their size and and depth of the earth quake by
+// color. Earthquakes with higher magnitudes should appear
+// larger and earthquakes with greater depth should appear darker in color."
+
+
 ////// should I make this a layer instead of just adding them all to the map individually
 function makeCircles(data){
 
