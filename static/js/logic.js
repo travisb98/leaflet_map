@@ -76,81 +76,55 @@ function makeMarkers(data){
 ////// should I make this a layer instead of just adding them all to the map individually
 function makeCircles(data){
 
-  var mag_list = data.features.map(x => x.properties.mag);
 
-  // console.log(mag_list[0]); 
-  // //// returns the max magnitude 
-  // var maxMagnitude = Math.max.apply(Math,data.features.map(x => x.properties.mag));
-  // var minMagnitude = Math.min.apply(Math,data.features.map(x => x.properties.mag));
+  ////// need to sort data.features by depth so i can put the smallest circles on top
 
-  //// returns the max magnitude 
+  var features = data.features.sort(function(a,b){
+    return b.properties.mag - a.properties.mag;
+  });
+
+  console.log(features);
+
+  
+  //// creates a list of all the magnitudes
+  var mag_list = features.map(x => x.properties.mag);
+
+  //// returns the min and max magnitude 
   var maxMagnitude = Math.max.apply(Math,mag_list);
   var minMagnitude = Math.min.apply(Math,mag_list);
 
-  mag_list.forEach(function(x){
-    
-    var colorVar=parseInt(((x-minMagnitude)/(maxMagnitude-minMagnitude)*255))
-    
-    // console.log(colorVar);
 
-    console.log(`rgb(${colorVar},${colorVar},${colorVar})`);
-  });
+  for (var x = 0; x < features.length; x++){
 
-
-  // colorScale(mag_list)
-
-
-
-
-
-  //// returns the max magnitude 
-  var maxMagnitude = Math.max.apply(Math,data.features.map(x => x.properties.mag));
-  var minMagnitude = Math.min.apply(Math,data.features.map(x => x.properties.mag));
-
-
-
-
-
-
-
-  // console.log(typeof maxMagnitude);
-  // console.log(maxMagnitude);
-
-  // console.log(minMagnitude);
-
-
-  for (var x = 0; x < data.features.length; x++){
-
-
-    /////// maybe i should sort by the circle size variable so the small circles are on top
 
     /// maybe define these variables outside the function and pass them into the function since we'll use them for multiple functions????
-    var lat = data.features[x].geometry.coordinates[1];
-    var lon = data.features[x].geometry.coordinates[0];
-    var depth = data.features[x].geometry.coordinates[2];
+    var lat = features[x].geometry.coordinates[1];
+    var lon = features[x].geometry.coordinates[0];
+    var depth = features[x].geometry.coordinates[2];
 
-    var property = data.features[x].properties;
+    var property = features[x].properties;
 
-    var magnitude = data.features[x].properties.mag;
+    var magnitude = features[x].properties.mag;
 
     // console.log(property);
 
     // console.log(magnitude);
 
 
-
-
-    /////// 
-
+    var colorVar=parseInt(((magnitude-minMagnitude)/(maxMagnitude-minMagnitude)*255))
     
+    colorVar = `rgb(${colorVar},${colorVar},${colorVar})`
+
 
     L.circle([lat,lon],{
       fillOpacity: .75,
       //// need to change this color based on the size of the circle?
-      color: "white",
+      color: colorVar,
       radius: depth * 5000
-
-    }).bindPopup('<h3> Magnitude: </h3>'+magnitude).addTo(myMap);
+    }).bindPopup(
+      '<h3> Magnitude: </h3>'+magnitude+'<br>'+
+      '<h3> Depth: </h3>'+depth
+    ).addTo(myMap);
 
   }
 
