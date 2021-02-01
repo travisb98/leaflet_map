@@ -6,6 +6,17 @@ var myMap = L.map('mapid',{
 });
 
 // Adding tile layer
+L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
+  tileSize: 512,
+  maxZoom: 18,
+  zoomOffset: -1,
+  id: "streets-v11",
+  accessToken: API_KEY
+}).addTo(myMap);
+
+
+// Adding tile layer
 L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
   attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
   tileSize: 512,
@@ -21,57 +32,28 @@ var startTime ="2014-01-01";
 
 var endTime="2014-01-02";
 
-var maxLongitude ="-69.52148437";
 
-var minLongitude ="-123.83789062";
-
-var maxLatitude ="48.74894534";
-
-var minLatitude="25.16517337";
+// var maxLongitude ="-69.52148437";
+var maxLongitude ="180";
 
 
-// //// query 
-// d3.json(queryUrl, function(data){
-//   console.log(data);
-
-// });
+// var minLongitude ="-123.83789062";
+var minLongitude ="-180";
 
 
-// var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=" + 
-//   "2014-01-02&maxlongitude=-69.52148437&minlongitude=-123.83789062&maxlatitude=48.74894534&minlatitude=25.16517337";
+// var maxLatitude ="48.74894534";
+var maxLatitude ="90";
 
-/// function for plotting markers
-function makeMarkers(data){
+var minLatitude="-90";
+
+/// function for plotting markers /// wnot sure if i"ll actually7 need this
+function makeMarkers(data){ 
   for (var x = 0; x < data.features.length; x++){
     var lat = data.features[x].geometry.coordinates[1];
     var lon = data.features[x].geometry.coordinates[0];
     L.marker([lat,lon]).addTo(myMap);
   };
 }
-
-
-// function bwColorScale(list){
-
-//   //// returns the max magnitude 
-//   var max = Math.max.apply(Math,list);
-//   var min = Math.min.apply(Math,list);
-
-//   mag.forEach(function(x){
-    
-//     var colorVar=parseInt(((x-min)/(max-min)*255))
-    
-//     console.log(`rgb(${colorVar},${colorVar},${colorVar})`);
-
-    
-//   });
-
-
-// return 
-
-// };
-
-
-
 
 //  make sure you're follwing these instructions, I may have switch depth and magnitutde on some of the asks:
 
@@ -81,25 +63,49 @@ function makeMarkers(data){
 // larger and earthquakes with greater depth should appear darker in color."
 
 
+//// pass in a list and a number within the list and it will return RGB formated gray scale
+function bwColorScale(list,unit){
+
+  //// returns the max magnitude 
+  var max = Math.max.apply(Math,list); 
+  var min = Math.min.apply(Math,list);
+
+  if (min < 0){console.log(min)};
+  
+  var colorVar = parseInt(((unit-min)/(max-min)*255));
+return `rgb(${colorVar},${colorVar},${colorVar})`;
+
+};
+
+
+
+
+////// function that creates circles and adds them to the map
 ////// should I make this a layer instead of just adding them all to the map individually
 function makeCircles(data){
 
 
-  ////// need to sort data.features by depth so i can put the smallest circles on top
-
+  /// sorts the features by magnitude 
   var features = data.features.sort(function(a,b){
     return b.properties.mag - a.properties.mag;
   });
 
-  console.log(features);
+  // console.log(features);
 
+  /// list of depths
+  var depth_list = features.map(x => x.geometry.coordinates[2])
+
+
+  // //// returns the min and max depths
+  // var maxDepth = Math.max.apply(Math,depth_list);
+  // var minDepth = Math.min.apply(Math,depth_list);
   
-  //// creates a list of all the magnitudes
-  var mag_list = features.map(x => x.properties.mag);
+  // //// creates a list of all the magnitudes
+  // var mag_list = features.map(x => x.properties.mag);
 
-  //// returns the min and max magnitude 
-  var maxMagnitude = Math.max.apply(Math,mag_list);
-  var minMagnitude = Math.min.apply(Math,mag_list);
+  // //// returns the min and max magnitude 
+  // var maxMagnitude = Math.max.apply(Math,mag_list);
+  // var minMagnitude = Math.min.apply(Math,mag_list);
 
 
   for (var x = 0; x < features.length; x++){
@@ -116,22 +122,20 @@ function makeCircles(data){
 
     // console.log(property);
 
-    // console.log(magnitude);
+    // console.log(magnitude)
 
-
-    var colorVar=parseInt(((magnitude-minMagnitude)/(maxMagnitude-minMagnitude)*255))
-    
-    colorVar = `rgb(${colorVar},${colorVar},${colorVar})`
-
+    //// use the black and white color scale function to return RGB string 
+    var colorVar = bwColorScale(depth_list,depth_list[x]);
 
     L.circle([lat,lon],{
       fillOpacity: .75,
       //// need to change this color based on the size of the circle?
       color: colorVar,
-      radius: depth * 5000
+      radius: magnitude * 50000
     }).bindPopup(
       '<h3> Magnitude: </h3>'+magnitude+'<br>'+
-      '<h3> Depth: </h3>'+depth
+      '<h3> Depth: </h3>'+depth+'<br>'+
+      '<h3> Place: </h3>'+property.place
     ).addTo(myMap);
 
   }
@@ -163,7 +167,7 @@ d3.json(queryUrl+"&starttime="+startTime+"&endtime="+endTime+"&maxlongitude="+ma
   // makeMarkers(data);
 
   makeCircles(data);
-  // console.log(data)
+  // console.log(data);
 
 
   // function makeQuakes (features){
