@@ -50,9 +50,79 @@ function makeMarkers(data){
 }
 
 
+// function bwColorScale(list){
+
+//   //// returns the max magnitude 
+//   var max = Math.max.apply(Math,list);
+//   var min = Math.min.apply(Math,list);
+
+//   mag.forEach(function(x){
+    
+//     var colorVar=parseInt(((x-min)/(max-min)*255))
+    
+//     console.log(`rgb(${colorVar},${colorVar},${colorVar})`);
+
+    
+//   });
+
+
+// return 
+
+// };
+
+
+
+
 ////// should I make this a layer instead of just adding them all to the map individually
 function makeCircles(data){
+
+  var mag_list = data.features.map(x => x.properties.mag);
+
+  // console.log(mag_list[0]); 
+  // //// returns the max magnitude 
+  // var maxMagnitude = Math.max.apply(Math,data.features.map(x => x.properties.mag));
+  // var minMagnitude = Math.min.apply(Math,data.features.map(x => x.properties.mag));
+
+  //// returns the max magnitude 
+  var maxMagnitude = Math.max.apply(Math,mag_list);
+  var minMagnitude = Math.min.apply(Math,mag_list);
+
+  mag_list.forEach(function(x){
+    
+    var colorVar=parseInt(((x-minMagnitude)/(maxMagnitude-minMagnitude)*255))
+    
+    // console.log(colorVar);
+
+    console.log(`rgb(${colorVar},${colorVar},${colorVar})`);
+  });
+
+
+  // colorScale(mag_list)
+
+
+
+
+
+  //// returns the max magnitude 
+  var maxMagnitude = Math.max.apply(Math,data.features.map(x => x.properties.mag));
+  var minMagnitude = Math.min.apply(Math,data.features.map(x => x.properties.mag));
+
+
+
+
+
+
+
+  // console.log(typeof maxMagnitude);
+  // console.log(maxMagnitude);
+
+  // console.log(minMagnitude);
+
+
   for (var x = 0; x < data.features.length; x++){
+
+
+    /////// maybe i should sort by the circle size variable so the small circles are on top
 
     /// maybe define these variables outside the function and pass them into the function since we'll use them for multiple functions????
     var lat = data.features[x].geometry.coordinates[1];
@@ -63,9 +133,16 @@ function makeCircles(data){
 
     var magnitude = data.features[x].properties.mag;
 
-    console.log(property);
+    // console.log(property);
 
     // console.log(magnitude);
+
+
+
+
+    /////// 
+
+    
 
     L.circle([lat,lon],{
       fillOpacity: .75,
@@ -104,7 +181,7 @@ d3.json(queryUrl+"&starttime="+startTime+"&endtime="+endTime+"&maxlongitude="+ma
   // makeMarkers(data);
 
   makeCircles(data);
-  console.log(data)
+  // console.log(data)
 
 
   // function makeQuakes (features){
