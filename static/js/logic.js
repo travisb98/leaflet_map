@@ -1,30 +1,23 @@
 
-/// making the map
-var myMap = L.map('mapid',{
-  center:[39.7128,-120.0059],
-  zoom:5
-});
+//  NOTE:
+// dates and times returned by Mapbox APIs are represented in RFC 3339 format,
 
-// Adding tile layer
-L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-  attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
-  tileSize: 512,
-  maxZoom: 18,
-  zoomOffset: -1,
-  id: "streets-v11",
-  accessToken: API_KEY
-}).addTo(myMap);
+// /// making the map
+// var myMap = L.map('mapid',{
+//   center:[39.7128,-120.0059],
+//   zoom:5
+// });
 
 
 // Adding tile layer
-L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+var titleLayer = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
   attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
   tileSize: 512,
   maxZoom: 18,
   zoomOffset: -1,
   id: "mapbox/streets-v11",
   accessToken: API_KEY
-}).addTo(myMap);
+});
 
 var queryUrl = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson";
 
@@ -33,34 +26,32 @@ var startTime ="2014-01-01";
 var endTime="2014-01-02";
 
 
-// var maxLongitude ="-69.52148437";
-var maxLongitude ="180";
+var maxLongitude ="-69.52148437";
+// var maxLongitude ="180";
 
+var minLongitude ="-123.83789062";
+// var minLongitude ="-180";
 
-// var minLongitude ="-123.83789062";
-var minLongitude ="-180";
-
-
-// var maxLatitude ="48.74894534";
-var maxLatitude ="90";
-
-var minLatitude="-90";
+var maxLatitude ="48.74894534";
+// var maxLatitude ="90";
+ 
+var minLatitude="25";
+// var minLatitude="-90";
 
 /// function for plotting markers /// wnot sure if i"ll actually7 need this
 function makeMarkers(data){ 
+  var markerList =[];
   for (var x = 0; x < data.features.length; x++){
     var lat = data.features[x].geometry.coordinates[1];
     var lon = data.features[x].geometry.coordinates[0];
-    L.marker([lat,lon]).addTo(myMap);
+    // L.marker([lat,lon]).addTo(myMap
+    markerList.push(L.marker([lat,lon]));
   };
+
+  return L.layerGroup(markerList);
 }
 
-//  make sure you're follwing these instructions, I may have switch depth and magnitutde on some of the asks:
 
-// "Your data markers should reflect the magnitude of the
-// earthquake by their size and and depth of the earth quake by
-// color. Earthquakes with higher magnitudes should appear
-// larger and earthquakes with greater depth should appear darker in color."
 
 
 //// pass in a list and a number within the list and it will return RGB formated gray scale
@@ -70,10 +61,26 @@ function bwColorScale(list,unit){
   var max = Math.max.apply(Math,list); 
   var min = Math.min.apply(Math,list);
 
-  if (min < 0){console.log(min)};
-  
-  var colorVar = parseInt(((unit-min)/(max-min)*255));
-return `rgb(${colorVar},${colorVar},${colorVar})`;
+  /// creating a list of 255 incrementing numbers with the index inverted,
+  var colorKeys = [];
+  for (var i = 0; i < 256; i++){
+    colorKeys.push(i);
+  };
+  colorKeys = colorKeys.reverse();
+
+ 
+  //  uses the instance in the list, max of the list and min of the list to scale to the RGB 0 to 255 scale. The colorKeys.indexOf reverses the order of the scale
+  var colorVar = colorKeys.indexOf(parseInt(((unit-min)/(max-min)*255))); // lighter
+  // var colorVar =parseInt(((unit-min)/(max-min)*255)); // darker
+
+
+  var r =  colorVar;
+  console.log(r);
+  var g = colorVar;
+  console.log(g);
+  var b = 180;
+  console.log(b);
+  return `rgb(${r},${g},${b})`;
 
 };
 
@@ -107,7 +114,9 @@ function makeCircles(data){
   // var maxMagnitude = Math.max.apply(Math,mag_list);
   // var minMagnitude = Math.min.apply(Math,mag_list);
 
-
+  /// list of circles we'll be using to make layer group
+  var circles = [];
+  //loop thru features
   for (var x = 0; x < features.length; x++){
 
 
@@ -127,19 +136,28 @@ function makeCircles(data){
     //// use the black and white color scale function to return RGB string 
     var colorVar = bwColorScale(depth_list,depth_list[x]);
 
-    L.circle([lat,lon],{
+    
+    circles.push(L.circle([lat,lon],{
       fillOpacity: .75,
-      //// need to change this color based on the size of the circle?
+      //// RGB white
+      // color: 'rgb(250,250,250)',
+
+      /// RGB Black
+      // color: 'rgb(0,0,0)',
+
       color: colorVar,
       radius: magnitude * 50000
     }).bindPopup(
       '<h3> Magnitude: </h3>'+magnitude+'<br>'+
       '<h3> Depth: </h3>'+depth+'<br>'+
       '<h3> Place: </h3>'+property.place
-    ).addTo(myMap);
+    ));
 
   }
 
+  // console.log(circles); 
+
+  return L.layerGroup(circles);
 
 }
 
@@ -150,35 +168,31 @@ d3.json(queryUrl+"&starttime="+startTime+"&endtime="+endTime+"&maxlongitude="+ma
   // console.log(data);
 
 
-  // ///unpacking json
-  // var bbox = data.bbox;
-  // var features = data.features;
-  // var metadata = data.metadata;
-  // console.log(data.bbox);
-  // console.log(data.features);
-  // console.log(data.metadata);
-  // console.log(data.features.length);
-  // console.log(data.features);
-  // console.log(data.features[0].geometry);
-  // console.log(data.features[0].properties);
-  // L.marker([39.7128,-120.0059]).addTo(myMap);
+  ///// idk about this i just needed a blank map layer in here for the code to work for some reason
+  var blankMaps = {
+    // title:titleLayer
+  };
 
 
-  // makeMarkers(data);
 
-  makeCircles(data);
-  // console.log(data);
-
-
-  // function makeQuakes (features){
-
-  //   function eachFeat (feature,layer){
-
-  //   }
-
-  // };
+  var overlayMaps ={
+    Markers:makeMarkers(data),
+    Circles:makeCircles(data)
+  };
 
 
+
+  /// making the map
+  var myMap = L.map('mapid',{
+  center:[39.7128,-120.0059],
+  zoom:5,
+  layers:[titleLayer]
+  });
+
+
+  L.control.layers(blankMaps,overlayMaps).addTo(myMap);
+
+  
 });
 
 
